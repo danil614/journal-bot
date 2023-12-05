@@ -1,63 +1,75 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
 from models import User, Subject, Student, Journal, Base
+import config
 
-# Assuming you have created the tables and connected to the database
-engine = create_engine('sqlite:///bot_database.db')
-Base.metadata.bind = engine
-Base.metadata.create_all(engine)
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
 
-# Students
-student_names = [
-    "Белов Даниил Алексеевич",
-    "Иванова Александра Дмитриевна",
-    "Карпов Артемий Петрович",
-    "Козлова Анастасия Владимировна",
-    "Коновалов Николай Артемович",
-    "Михайлова Ольга Ивановна",
-    "Морозов Илья Павлович",
-    "Николаева Елизавета Васильевна",
-    "Павлова Арина Григорьевна",
-    "Петров Никита Сергеевич",
-    "Сидорова Алина Максимовна",
-    "Смирнова Мария Ивановна",
-    "Соколов Владислав Игоревич",
-    "Степанова Виктория Юрьевна",
-    "Титов Фёдор Владимирович",
-    "Федоров Егор Александрович",
-    "Федорова Валерия Алексеевна",
-    "Хохлов Андрей Петрович",
-    "Чернова Екатерина Степановна",
-    "Шестакова Анна Алексеевна"
-]
+def fill_database():
+    engine = create_engine(config.DB_URL)
+    Base.metadata.create_all(engine)
 
-students = []
-for name in student_names:
-    student = Student(name=name)
-    students.append(student)
+    with Session(engine) as session:
+        student_names = [
+            "Белов Даниил Алексеевич",
+            "Иванова Александра Дмитриевна",
+            "Карпов Артемий Петрович",
+            "Козлова Анастасия Владимировна",
+            "Коновалов Николай Артемович",
+            "Михайлова Ольга Ивановна",
+            "Морозов Илья Павлович",
+            "Николаева Елизавета Васильевна",
+            "Павлова Арина Григорьевна",
+            "Петров Никита Сергеевич",
+            "Сидорова Алина Максимовна",
+            "Смирнова Мария Ивановна",
+            "Соколов Владислав Игоревич",
+            "Степанова Виктория Юрьевна",
+            "Титов Фёдор Владимирович",
+            "Федоров Егор Александрович",
+            "Федорова Валерия Алексеевна",
+            "Хохлов Андрей Петрович",
+            "Чернова Екатерина Степановна",
+            "Шестакова Анна Алексеевна"
+        ]
 
-session.add_all(students)
-session.commit()
+        students = []
+        for name in student_names:
+            student = Student(name=name)
+            students.append(student)
 
-subject_names = [
-    "Параллельные времена",
-    "Пингвины и звуки",
-    "Карамельные частицы",
-    "Астрономия для магов",
-    "Килты в космосе",
-    "Философия котов",
-    "Психоанализ роботов",
-    "Дома для чувств",
-    "Квантовый шоколад",
-    "Танцующие листья"
-]
+        session.add_all(students)
+        session.commit()
 
-subjects = []
-for name in subject_names:
-    subject = Subject(name=name)
-    subjects.append(subject)
+        subject_names = [
+            "История",
+            "Информатика",
+            "Математика",
+            "Экология",
+            "Политология",
+            "Правоведение",
+            "Теория управления",
+            "Прогнозирование и планирование",
+            "Психология",
+            "Основы элитологии"
+        ]
 
-session.add_all(subjects)
-session.commit()
+        subjects = []
+        for name in subject_names:
+            subject = Subject(name=name)
+            subjects.append(subject)
+
+        session.add_all(subjects)
+        session.commit()
+
+        insert_users(session)
+
+
+def insert_users(session):
+    users = [User(login="gmu-20", group="GroupTest", name="Test Name One"),
+             User(login="test", group="TEST-4", name="Тестовый Тест Тестович")]
+    session.add_all(users)
+    session.commit()
+
+
+if __name__ == "__main__":
+    fill_database()
