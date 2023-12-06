@@ -16,6 +16,5 @@ def create_inline_keyboard(prefix, items) -> InlineKeyboardMarkup:
     """
     Создает клавиатуру в сообщении.
     """
-    buttons = [[InlineKeyboardButton(text=f'{item.id}. {item.name}', callback_data=f'{prefix}_{item.id}')] for item in
-               items]
+    buttons = [[InlineKeyboardButton(text=str(item), callback_data=f'{prefix}_{item.id}')] for item in items]
     return InlineKeyboardMarkup(inline_keyboard=buttons)

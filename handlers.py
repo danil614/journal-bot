@@ -3,7 +3,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from states import Account, Journal
-from requests import get_user, get_subjects, get_students
+from requests import get_user, get_subjects, get_students, save_journal, get_subject_by_id, get_journal_by_date
 import keyboards
 from helpers import validate_date, validate_int, get_ints
 import config
@@ -24,9 +24,10 @@ async def login(callback: CallbackQuery, state: FSMContext):
     """
     Обработчик нажатия кнопки "Войти".
     """
-    await callback.answer('Введите свой логин:')
-    await state.update_data(user=None)  # Стираем старые данные пользователя
+    await callback.message.edit_text('Введите свой логин:')
+    await state.clear()  # Стираем старые данные пользователя
     await state.set_state(Account.entering_login)  # Устанавливаем состояние ввода логина
+    await state.update_data(last_message=callback.message)  # Сохраняем предыдущее сообщение
 
 
 @router.message(Account.entering_login)
@@ -36,10 +37,14 @@ async def login_entered(message: Message, state: FSMContext):
     """
     user = await get_user(message.text)
 
+    user_data = await state.get_data()
+    if user_data['last_message'] is not None:
+        await user_data['last_message'].delete()
+
     if user is None:
         await message.answer(f'Пользователь с логином "{message.text}" не найден', reply_markup=keyboards.login)
     else:
-        await message.answer(f'Добро пожаловать, {user.name}\nВаша группа: {user.group}\n\nПосещаемость:',
+        await message.answer(f'Добро пожаловать, {user.name}\nВаша группа: {user.group}\n\nДействия с посещаемостью:',
                              reply_markup=keyboards.attendance)
         await state.update_data(user=user)
 
@@ -59,7 +64,7 @@ async def mark(callback: CallbackQuery, state: FSMContext):
 @router.message(Journal.entering_date)
 async def date_entered(message: Message, state: FSMContext):
     """
-    Обработчик введенной даты.
+    Обработчик введенной даты для отметки посещаемости.
     """
     date = validate_date(message.text)
 
@@ -82,7 +87,8 @@ async def subject_entered(callback: CallbackQuery, state: FSMContext):
     """
     subject_id = int(callback.data.replace(f'{config.SUBJECT_PREFIX}_', ''))
     await state.update_data(subject_id=subject_id)
-    await callback.message.answer('Дисциплина выбрана\nВведите номер пары в расписании:')
+    subject = await get_subject_by_id(subject_id)
+    await callback.message.answer(f'Выбрана дисциплина "{subject}"\nВведите номер пары в расписании:')
     await state.set_state(Journal.entering_lesson_number)
 
 
@@ -112,12 +118,49 @@ async def absent_students_entered(message: Message, state: FSMContext):
     Обработчик введенных номеров студентов.
     """
     absent_student_ids = get_ints(message.text)
-    await message.answer(f'"{absent_student_ids}"')
+    user_data = await state.get_data()
+
+    await save_journal(absent_student_ids, user_data['subject_id'], user_data['user'].id, user_data['date'],
+                       user_data['lesson_number'])
+    await state.set_state(Account.logged)
+
+    # Сообщение после сохранения посещаемости
+    await message.answer(f'Посещаемость сохранена!\n\nПосещаемость:',
+                         reply_markup=keyboards.attendance)
 
 
 @router.callback_query(Account.logged, F.data == "view")
 async def view(callback: CallbackQuery, state: FSMContext):
-    await callback.answer('Посмотреть посещаемость')
+    """
+    Посмотреть посещаемость.
+    """
+    await callback.message.answer('Введите дату (например: 06.05.2023):')
+    await state.set_state(Journal.entering_date_view)
+
+
+@router.message(Journal.entering_date_view)
+async def date_view_entered(message: Message, state: FSMContext):
+    """
+    Обработчик введенной даты для просмотра посещаемости.
+    """
+    date = validate_date(message.text)
+
+    if date is None:
+        await message.answer('Дата введена неверно!\nВведите дату (например: 06.05.2023):')
+    else:
+        text = f'Посещаемость студентов на {message.text}:'
+        journal = await get_journal_by_date(date)
+
+        for item in journal.values():
+            text += '\n' + ' '.join(item)
+
+        await message.answer(text)
+
+        await state.set_state(Account.logged)
+
+        # Сообщение после сохранения посещаемости
+        await message.answer(f'Действия с посещаемостью:',
+                             reply_markup=keyboards.attendance)
 
 
 @router.message()

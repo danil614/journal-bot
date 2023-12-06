@@ -8,6 +8,7 @@ class Account(StatesGroup):
 
 class Journal(StatesGroup):
     entering_date = State()
+    entering_date_view = State()
     choosing_subject = State()
     entering_lesson_number = State()
     entering_absent_students = State()

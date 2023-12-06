@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 
 
 def validate_date(date_str: str):
@@ -8,7 +8,7 @@ def validate_date(date_str: str):
     date_format = "%d.%m.%Y"
 
     try:
-        result = datetime.strptime(date_str, date_format)
+        result = datetime.datetime.strptime(date_str, date_format).date()
     except ValueError:
         result = None
 
