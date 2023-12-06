@@ -38,6 +38,9 @@ class Student(Base):
     # Relationships
     journals = relationship("Journal", back_populates="student")
 
+    def __str__(self):
+        return f'{self.id}. {self.name}'
+
 
 class Journal(Base):
     __tablename__ = 'journals'

@@ -65,8 +65,8 @@ def fill_database():
 
 
 def insert_users(session):
-    users = [User(login="gmu-20", group="GroupTest", name="Test Name One"),
-             User(login="test", group="TEST-4", name="Тестовый Тест Тестович")]
+    users = [User(login="Name", group="GroupTest", name="Test Name One"),
+             User(login="Test", group="TEST-4", name="Тестовый Тест Тестович")]
     session.add_all(users)
     session.commit()
 
