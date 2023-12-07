@@ -10,6 +10,8 @@ import config
 
 router = Router()
 
+ENTER_DATE_MESSAGE = 'Введите дату (например: 26.07.2023):'
+
 
 async def get_message_actions_with_attendance(message: Message):
     await message.answer(f'Действия с посещаемостью:',
@@ -21,7 +23,7 @@ async def start_handler(message: Message):
     """
     Обработчик стартовой команды.
     """
-    await message.answer('Привет! Для входа в систему нажми кнопку "Войти"', reply_markup=keyboards.login)
+    await message.answer('Привет! Для входа в систему нажмите кнопку "Войти"', reply_markup=keyboards.login)
 
 
 @router.callback_query(F.data == "login")
@@ -63,7 +65,7 @@ async def mark(callback: CallbackQuery, state: FSMContext):
     """
     Отметить посещаемость.
     """
-    await callback.message.answer('Введите дату (например: 6.5.2023):')
+    await callback.message.answer(ENTER_DATE_MESSAGE)
     await state.set_state(Journal.entering_date)
 
 
@@ -76,7 +78,7 @@ async def date_entered(message: Message, state: FSMContext):
 
     if date is None:
         await message.answer('Дата введена неверно!')
-        await message.answer('Введите дату (например: 6.5.2023):')
+        await message.answer(ENTER_DATE_MESSAGE)
     else:
         await state.update_data(date=date)
 
@@ -166,7 +168,7 @@ async def view(callback: CallbackQuery, state: FSMContext):
     """
     Посмотреть посещаемость.
     """
-    await callback.message.answer('Введите дату (например: 6.5.2023):')
+    await callback.message.answer(ENTER_DATE_MESSAGE)
     await state.set_state(Journal.entering_date_view)
 
 
@@ -179,9 +181,9 @@ async def date_view_entered(message: Message, state: FSMContext):
 
     if date is None:
         await message.answer('Дата введена неверно!')
-        await message.answer('Введите дату (например: 6.5.2023):')
+        await message.answer(ENTER_DATE_MESSAGE)
     else:
-        text = f'Посещаемость студентов на {message.text}:'
+        text = f'Посещаемость студентов на {message.text}:\n'
         journal = await get_journal_by_date(date)
 
         for item in journal.values():
