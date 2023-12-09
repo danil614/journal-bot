@@ -187,7 +187,7 @@ async def date_view_entered(message: Message, state: FSMContext):
         journal = await get_journal_by_date(date)
 
         for item in journal.values():
-            text += '\n' + ' '.join(item)
+            text += '\n' + item[0] + ' ' + '; '.join(item[1:])
 
         await message.answer(text)
 
